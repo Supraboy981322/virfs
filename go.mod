@@ -1,4 +1,4 @@
-module virfs
+module github.com/Supraboy981322/virfs
 
 go 1.25.5
 
