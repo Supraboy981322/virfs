@@ -17,5 +17,5 @@ func main() {
 	if e := fs.MkFile("/usr/foo", []byte("bar")); e != nil {
 		panic(e)
 	}
-	fmt.Printf("\n%#v\n", fs.Root.Content["usr"].Dir.Content["foo"])
+	fmt.Printf("\n%#v\n", fs.Root.Content["usr"].Dir.Contains("foo"))
 }
