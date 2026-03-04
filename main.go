@@ -1,6 +1,7 @@
 package virfs
 
 import (
+	"fmt"
 	"errors"
 	"strings"
 )
@@ -17,6 +18,8 @@ const (
 type (
 	Dir struct {
 		Content map[string]Entry
+		Name string
+		Parent *Dir
 	}
 
 	File struct {
@@ -43,27 +46,31 @@ var (
 )
 
 func Init() Fs {
-	return Fs {
+	fs := Fs {
 		Root: Dir {
 			Content: map[string]Entry{},
+			Name: "/",
 		},
 	}
+	fs.Root.Parent = &fs.Root
+	return fs
 }
 
 func (fs Fs) Mkdir(path string) error {
 	if len(path) < 1 { return EmptyPath }
 	if path[0] != '/' { return InvalidPath }
 
-	path_split := strings.Split(path[1:], "/")
 	current, e := fs.goto_path(path)
 	if e != nil { return e } 
 
-	target := path_split[len(path_split)-1]
+	target := Get_name(path)
 	if current.Contains(target) { return FileExists }
 
 	(*current).Content[target] = Entry {
 		Entry_type: Dir_entry,
-		Dir: &Dir{},
+		Dir: &Dir{
+			Name: target,
+		},
 		File: nil,
 		Name: target,
 	}
@@ -93,16 +100,35 @@ func (fs Fs) goto_path(path string) (*Dir, error) {
 	if len(path_split) < 2 { return &fs.Root, nil }
 	
 	current := &(fs.Root)
-	for _, d := range path_split {
+	for _, d := range path_split[1:] {
 		if !current.Contains(d) { return nil, DirNotExist }
 	}
 	return current, nil
 }
 
-func (fs Fs) MkFile(path string, content []byte) error {
-	current := fs.goto_path
-	_=current
+func Get_name(path string) string {
+	split := strings.Split(path, "/") 
+	return split[len(split)-1]
+}
 
+func (fs Fs) MkFile(path string, content []byte) error {
+	if !Is_valid_path(path) { return InvalidPath }
+
+	current, e := fs.goto_path(path)
+	if e != nil { return e }
+
+	target := Get_name(path)
+	if current.Contains(target) { return FileExists }
+
+	(*current).Content[target] = Entry { 
+		Entry_type: File_entry,
+		Dir: nil,
+		File: &File{
+			Content: content,
+		},
+		Name: target, 
+	}
+	
 	return nil
 }
 
@@ -112,3 +138,6 @@ func (d Dir) Contains(name string) bool {
 	}
 	return false
 }
+
+//so I can just willy-nilly insert a print statement without importing again 
+func _(){fmt.Print()}
