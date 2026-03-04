@@ -55,6 +55,14 @@ func Init() Fs {
 	return fs
 }
 
+func Init_UNIX() Fs {
+	fs := Fs {
+		Root: Unix_root_dir(),
+	}
+	fs.Root.Parent = &fs.Root
+	return fs
+}
+
 func (fs Fs) Mkdir(path string) error {
 	if len(path) < 1 { return EmptyPath }
 	if path[0] != '/' { return InvalidPath }
@@ -103,3 +111,26 @@ func (fs Fs) MkFile(path string, content []byte) error {
 
 //so I can just willy-nilly insert a print statement without importing again 
 func _(){fmt.Print()}
+
+func Unix_root_dir() Dir {
+	var root = Dir {
+		Content: map[string]Entry{},
+		Name: "/",
+	}
+	paths := []string {
+		"usr", "etc", "var", "bin", "lib", "media", "mnt", "tmp",
+	}
+	for _, p := range paths {
+		root.Content[p] = Entry {
+			Entry_type: Dir_entry,
+			Dir: &Dir {
+				Content: map[string]Entry{},
+				Name: p,
+				Parent: &root,
+			},
+			File: nil,
+			Name: p,
+		}
+	}
+	return root
+}
