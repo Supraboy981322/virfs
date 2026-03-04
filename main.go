@@ -70,6 +70,7 @@ func (fs Fs) Mkdir(path string) error {
 		Entry_type: Dir_entry,
 		Dir: &Dir{
 			Name: target,
+			Content: map[string]Entry{},
 		},
 		File: nil,
 		Name: target,
@@ -95,13 +96,14 @@ func (fs Fs) goto_path(path string) (*Dir, error) {
 	if !Is_valid_path(path) { return nil, InvalidPath }
 
 	base, e := Get_basepath(path)
+	if len(base) == 0 { return &fs.Root, nil }
 	if e != nil { return nil, e }
 	path_split := strings.Split(base, "/")
-	if len(path_split) < 2 { return &fs.Root, nil }
-	
+
 	current := &(fs.Root)
-	for _, d := range path_split[1:] {
+	for _, d := range path_split {
 		if !current.Contains(d) { return nil, DirNotExist }
+		current = (*current).Content[d].Dir
 	}
 	return current, nil
 }
@@ -120,12 +122,14 @@ func (fs Fs) MkFile(path string, content []byte) error {
 	target := Get_name(path)
 	if current.Contains(target) { return FileExists }
 
+	file := File{
+		Content: content,
+	}
+
 	(*current).Content[target] = Entry { 
 		Entry_type: File_entry,
 		Dir: nil,
-		File: &File{
-			Content: content,
-		},
+		File: &file,
 		Name: target, 
 	}
 	
