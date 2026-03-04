@@ -1,7 +1,6 @@
-package main
+package virfs
 
 import (
-	"fmt"
 	"errors"
 	"strings"
 )
@@ -17,29 +16,23 @@ const (
 
 type (
 	Dir struct {
-		content map[string]Entry
+		Content map[string]Entry
 	}
 
 	File struct {
-		content []byte
+		Content []byte
 	}
 
 	Entry struct {
-		entry_type Entry_type
-		dir *Dir //if file, will be nil
-		file *File //if dir, will be nil
-		name string
+		Entry_type Entry_type
+		Dir *Dir //if file, will be nil
+		File *File //if dir, will be nil
+		Name string
 	}
 )
 
 type Fs struct {
-	root Dir
-}
-
-var FS = Fs {
-	root: Dir {
-		content: map[string]Entry{},
-	},
+	Root Dir
 }
 
 var (
@@ -49,12 +42,12 @@ var (
 	InvalidPath = errors.New("malformed path")
 )
 
-func main() {
-	fmt.Printf("%#v\n", FS.root.content)
-	if e := FS.Mkdir("/usr"); e != nil {
-		panic(e)
+func Init() Fs {
+	return Fs {
+		Root: Dir {
+			Content: map[string]Entry{},
+		},
 	}
-	fmt.Printf("%#v\n", FS.root.content)
 }
 
 func (fs Fs) Mkdir(path string) error {
@@ -68,11 +61,11 @@ func (fs Fs) Mkdir(path string) error {
 	target := path_split[len(path_split)-1]
 	if current.Contains(target) { return FileExists }
 
-	(*current).content[target] = Entry {
-		entry_type: Dir_entry,
-		dir: &Dir{},
-		file: nil,
-		name: target,
+	(*current).Content[target] = Entry {
+		Entry_type: Dir_entry,
+		Dir: &Dir{},
+		File: nil,
+		Name: target,
 	}
 
 	return nil
@@ -97,9 +90,9 @@ func (fs Fs) goto_path(path string) (*Dir, error) {
 	base, e := Get_basepath(path)
 	if e != nil { return nil, e }
 	path_split := strings.Split(base, "/")
-	if len(path_split) < 2 { return &fs.root, nil }
+	if len(path_split) < 2 { return &fs.Root, nil }
 	
-	current := &(fs.root)
+	current := &(fs.Root)
 	for _, d := range path_split {
 		if !current.Contains(d) { return nil, DirNotExist }
 	}
@@ -114,7 +107,7 @@ func (fs Fs) MkFile(path string, content []byte) error {
 }
 
 func (d Dir) Contains(name string) bool {
-	for n, _ := range d.content {
+	for n := range d.Content {
 		if name == n { return true }
 	}
 	return false
