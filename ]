@@ -3,6 +3,7 @@ package virfs
 import (
 	"fmt"
 	"errors"
+	"strings"
 )
 
 type Entry_type int
@@ -99,6 +100,13 @@ func (fs Fs) MkFile(path string, content []byte) error {
 	}
 	
 	return nil
+}
+
+func (d Dir) Contains(name string) bool {
+	for n := range d.Content {
+		if name == n { return true }
+	}
+	return false
 }
 
 //so I can just willy-nilly insert a print statement without importing again 
