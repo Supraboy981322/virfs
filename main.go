@@ -34,11 +34,11 @@ type (
 		Content []byte
 		Reader io.Reader
 		Writer io.Writer
+		Size uint
 
 		// TODO:
 		//  - properties
 		//  - permissions
-		//  - size
 		//  - probably some other stuff
 	}
 
@@ -166,6 +166,8 @@ func (fs Fs) MkFile(path string, content []byte) error {
 			Content: content,
 			Reader: buf,
 			Writer: buf,
+			// TODO: change this to prevent overflow
+			Size: uint(len(content)),
 		},
 		Name: target, 
 	}
