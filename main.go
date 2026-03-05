@@ -1,7 +1,9 @@
 package virfs
 
 import (
+	"io"
 	"fmt"
+	"bytes"
 	"errors"
 )
 
@@ -30,6 +32,8 @@ type (
 	//file
 	File struct {
 		Content []byte
+		Reader io.Reader
+		Writer io.Writer
 
 		// TODO:
 		//  - properties
@@ -38,7 +42,7 @@ type (
 		//  - probably some other stuff
 	}
 
-	//
+	//item in a dir
 	Entry struct {
 		Entry_type Entry_type
 		//name of file/dir (not path)
@@ -152,12 +156,16 @@ func (fs Fs) MkFile(path string, content []byte) error {
 	//make sure the target isn't empty (can occur if trailing slash in path)
 	if len(target) == 0 { return InvalidPath }
 
+	buf := bytes.NewBuffer(content)
+
 	//create the entry
 	(*current).Content[target] = Entry { 
 		Entry_type: File_entry,
 		Dir: nil,
 		File: &File{
 			Content: content,
+			Reader: buf,
+			Writer: buf,
 		},
 		Name: target, 
 	}
