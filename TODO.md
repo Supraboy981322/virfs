@@ -1,0 +1,15 @@
+- [x] proto
+- [x] init unix root
+- [x] make dir
+- [x] make file
+- [x] remove dir
+- [x] remove file
+- [x] dir contains
+- [x] path validation
+- [x] resolve path
+- [x] root check
+- [ ] io/fs.FS interface
+- [ ] writing fs to bin
+- [ ] permissions
+- [ ] properties
+- [ ] settings
