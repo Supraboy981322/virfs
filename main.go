@@ -82,6 +82,7 @@ var (
 	Type_mismatch = errors.New("missmatched entry type")
 	DirNotEmpty = errors.New("directory is not empty")
 	FileNotExist = errors.New("file does not exist")
+	PermissionDenied = errors.New("permission denied")
 )
 
 //initialize empty fs
@@ -184,6 +185,9 @@ func (fs Fs) RmDir(path string, force bool) error {
 
 	//get the dir name
 	name := Get_name(path)
+
+	//make sure it's not the root dir
+	if fs.Is_root(name) { return PermissionDenied }
 
 	//make sure it's present
 	if !p.Contains(name) { return DirNotExist }
