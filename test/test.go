@@ -108,9 +108,14 @@ func unix_test() {
 	}
 
 	task("attempting to delete filesystem root")
+	previous_len := len(fs.Root.Content)
 	e = fs.RmDir("/", true) 
-	if e != virfs.PermissionDenied || len(fs.Root.Content) < 1 {
-		failed("failed to prevent root dir deletion (%v)", e)
+	if e != virfs.PermissionDenied || len(fs.Root.Content) != previous_len {
+		if e != virfs.PermissionDenied {
+			failed("failed to prevent root dir deletion (err: %v)", e)
+		} else {
+			failed("size changed (before{%d} ; after{%d})", previous_len, len(fs.Root.Content))
+		}
 	} else {
 		passed("prevented deleting root dir")
 	}
