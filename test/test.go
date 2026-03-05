@@ -106,6 +106,14 @@ func unix_test() {
 	} else {
 		passed("prevented removal of non-empty dir")
 	}
+
+	task("attempting to delete filesystem root")
+	e = fs.RmDir("/", true) 
+	if e != virfs.PermissionDenied {
+		failed("failed to prevent root dir deletion (%v)", e)
+	} else {
+		passed("prevented deleting root dir")
+	}
 }
 
 func empty_fs() {
