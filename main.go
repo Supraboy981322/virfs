@@ -126,7 +126,7 @@ func (fs Fs) Mkdir(path string) error {
 	//get the name of the dir
 	target := Get_name(path)
 	//if already exists or is root, err
-	if current.Contains(target) || fs.Is_root(path) { return FileExists }
+	if current.Contains(target) || fs.Is_path_root(path) { return FileExists }
 
 	//add the entry to the path's parent dir 
 	(*current).Content[target] = Entry {
@@ -154,7 +154,7 @@ func (fs Fs) MkFile(path string, content []byte) error {
 	//get the name of the file
 	target := Get_name(path)
 	//make sure the file isn't already present and isn't root dir
-	if current.Contains(target) || fs.Is_root(path) { return FileExists }
+	if current.Contains(target) || fs.Is_path_root(path) { return FileExists }
 	//make sure the target isn't empty (can occur if trailing slash in path)
 	if len(target) == 0 { return InvalidPath }
 
@@ -188,7 +188,7 @@ func (fs Fs) RmDir(path string, force bool) error {
 	name := Get_name(path)
 
 	//make sure it's not the root dir
-	if fs.Is_root(name) { return PermissionDenied }
+	if fs.Is_path_root(name) { return PermissionDenied }
 
 	//make sure it's present
 	if !p.Contains(name) { return DirNotExist }
