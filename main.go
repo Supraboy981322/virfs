@@ -56,6 +56,7 @@ type (
 	Fs struct {
 		//root dir ('/')
 		Root Dir
+
 		// TODO:
 		//  - properties
 		//  - settings
