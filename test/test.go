@@ -109,7 +109,7 @@ func unix_test() {
 
 	task("attempting to delete filesystem root")
 	e = fs.RmDir("/", true) 
-	if e != virfs.PermissionDenied {
+	if e != virfs.PermissionDenied || len(fs.Root.Content) < 1 {
 		failed("failed to prevent root dir deletion (%v)", e)
 	} else {
 		passed("prevented deleting root dir")
