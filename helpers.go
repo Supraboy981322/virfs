@@ -107,6 +107,10 @@ func (fs Fs) Is_path_root(path string) bool {
 	p, _ := Resolve_path(path)
 	return p == filepath.Dir(p)
 }
+//helper to check if a path is root dir
+func (fs Fs) Is_root(dir *Dir) bool {
+	return dir == &fs.Root
+}
 
 //helper to resolve a path to valid (hopefully), abs path
 func Resolve_path(path string) (string, error) {
