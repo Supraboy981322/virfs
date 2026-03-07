@@ -3,6 +3,7 @@ package virfs
 import (
 	"io"
 	"fmt"
+	"sync"
 	"bytes"
 	"errors"
 )
@@ -51,6 +52,9 @@ type (
 		Dir *Dir
 		//if dir, will be nil
 		File *File
+
+		//private stuff
+		mutex *sync.Mutex
 	}
 
 	Fs struct {
@@ -135,6 +139,7 @@ func (fs Fs) Mkdir(path string) error {
 			Name: target,
 			Content: map[string]Entry{},
 		},
+		mutex: new(sync.Mutex),
 		File: nil,
 		Name: target,
 	}
@@ -171,6 +176,7 @@ func (fs Fs) MkFile(path string, content []byte) error {
 			// TODO: change this to prevent overflow
 			Size: uint(len(content)),
 		},
+		mutex: new(sync.Mutex),
 		Name: target, 
 	}
 	
@@ -180,6 +186,9 @@ func (fs Fs) MkFile(path string, content []byte) error {
 //remove a dir (takes absolute path only, set 'force' to true to
 //  delete non-empty dir)
 func (fs Fs) RmDir(path string, force bool) error {
+	//determines if mutex is unlocked
+	var deleted bool
+
 	//traverse to the path's parent dir
 	p, e := fs.goto_path(path)
 	if e != nil { return e }
@@ -193,11 +202,22 @@ func (fs Fs) RmDir(path string, force bool) error {
 	//make sure it's present
 	if !p.Contains(name) { return DirNotExist }
 
+	dir := p.Content[name]
+
+	//aquire a lock and unlock only if not deleted
+	if dir.mutex != nil { dir.mutex.Lock() }
+	defer func(){
+		if !deleted && dir.mutex != nil { dir.mutex.Unlock() }
+	}()
+
 	//err if not a dir
 	if p.Content[name].Entry_type != Dir_entry { return Type_mismatch }
 
 	//make sure the directory isn't empty if no force
 	if !force && len(p.Content[name].Dir.Content) != 0 { return DirNotEmpty }
+
+	//mark as deleted
+	deleted = true
 
 	//remove from fs
 	delete(p.Content, name)
@@ -208,6 +228,9 @@ func (fs Fs) RmDir(path string, force bool) error {
 //delete a file (takes absolute path only, set 'recurse' to true
 //  if path may be dir)
 func (fs Fs) RmFile(path string, recurse bool) error {
+	//determines if mutex is unlocked
+	var deleted bool
+
 	//traverse to the file's parent dir
 	p, e := fs.goto_path(path)
 	if e != nil { return e }
@@ -218,6 +241,13 @@ func (fs Fs) RmFile(path string, recurse bool) error {
 	//make sure the file is present in the path's parent dir
 	if !p.Contains(name) { return FileNotExist }
 
+	dir := p.Content[name]
+	//aquire a lock and unlock only if not deleted
+	if dir.mutex != nil { dir.mutex.Lock() }
+	defer func(){
+		if !deleted && dir.mutex != nil { dir.mutex.Unlock() }
+	}()
+
 	//make sure it's a file
 	if p.Content[name].Entry_type != File_entry {
 		//if -r, assume it's a dir 
@@ -226,6 +256,8 @@ func (fs Fs) RmFile(path string, recurse bool) error {
 		return Type_mismatch
 	}
 
+	//mark as deleted
+	deleted = true
 	//remove from fs
 	delete(p.Content, name)
 
