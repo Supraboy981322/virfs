@@ -225,6 +225,35 @@ func (fs Fs) RmDir(path string, force bool) error {
 	return nil
 }
 
+//read a file (takes absolute path only)
+func (fs Fs) ReadFile(path string) ([]byte, error) {
+	//traverse to the file's parent dir
+	p, e := fs.goto_path(path)
+	if e != nil { return nil, e }
+
+	//get the name of the file
+	name := Get_name(path)
+
+	//make sure the file is present in the path's parent dir
+	if !p.Contains(name) { return nil, FileNotExist }
+
+	dir := p.Content[name]
+
+	//aquire a lock
+	if dir.mutex != nil { dir.mutex.Lock() }
+	defer func(){
+		if dir.mutex != nil { dir.mutex.Unlock() }
+	}()
+
+	//make sure it's a file
+	if p.Content[name].Entry_type != File_entry {
+		return nil, Type_mismatch
+	}
+
+	//return the file's contents
+	return p.Content[name].File.Content, nil
+}
+
 //delete a file (takes absolute path only, set 'recurse' to true
 //  if path may be dir)
 func (fs Fs) RmFile(path string, recurse bool) error {
