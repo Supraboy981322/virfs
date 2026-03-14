@@ -3,14 +3,42 @@
 package main
 
 import (
+	"os"
 	"fmt"
 	"sync"
+	"os/exec"
 	"github.com/Supraboy981322/virfs"
 )
 //so I can just willy-nilly insert a print statement without importing again 
 func _(){fmt.Print()}
 
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		 case "vi": {
+			fmt.Println("creating unix fs")
+			fs := virfs.Init_UNIX()
+			fmt.Println("attempting vi")
+			tmp, e := os.CreateTemp("", "tmp")
+			if e != nil { panic(e) }
+			defer os.Remove(tmp.Name())
+			cmd := exec.Command("vi", tmp.Name())
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			cmd.Stdin = os.Stdin
+			if e = cmd.Run(); e != nil { panic(e) }
+			if e != nil { panic(e) }
+			contents, e := os.ReadFile(tmp.Name())
+			if e != nil { panic(e) }
+			e = fs.MkFile("/usr/foo", contents)
+			if e != nil { panic(e) }
+			vir_contents, e := fs.ReadFile("/usr/foo")
+			if e != nil { panic(e) }
+			os.Stdout.Write(append([]byte("virfs file contents:\n"), vir_contents...))
+		 }
+		}
+		os.Exit(0)
+	}
 	//unix_test()
 
 	//initialize a UNIX root dir
@@ -46,11 +74,20 @@ func async_test(fs virfs.Fs, wg *sync.WaitGroup) {
 		failed("%v", e)
 	} else {
 		passed("created file in subdir to root")
-}
+	}
+	
+	//attempt to read the file
+	task("read file /usr/foo")
+	vir_contents, e := fs.ReadFile("/usr/foo")
+	if e != nil {
+		failed("couldn't read file")
+	} else {
+		passed("read file")
+	}
 
 	//verify file contents match expected
 	task("verify /usr/foo contents")
-	if string(fs.Root.Content["usr"].Dir.Content["foo"].File.Content) != "bar" {
+	if string(vir_contents) != "bar" {
 		failed("file contents did not match")
 	} else {
 		passed("file contents matched")
@@ -74,9 +111,18 @@ func async_test(fs virfs.Fs, wg *sync.WaitGroup) {
 		passed("created file in root dir")
 	}
 
+	//attempt to read the file
+	task("read file /usr/foo")
+	vir_contents2, e := fs.ReadFile("/bar")
+	if e != nil {
+		failed("couldn't read file")
+	} else {
+		passed("read file")
+	}
+
 	//verify the file contents match expected
 	task("verify /bar contents")
-	if string(fs.Root.Content["bar"].File.Content) != "foo" {
+	if string(vir_contents2) != "foo" {
 		failed("file contents did not match")
 	} else {
 		passed("file contents matched")
@@ -172,11 +218,20 @@ func unix_test() {
 		failed("%v", e)
 	} else {
 		passed("created file in subdir to root")
-}
+	}
+
+	//attempt to read the file
+	task("read file /usr/foo")
+	vir_contents, e := fs.ReadFile("/usr/foo")
+	if e != nil {
+		failed("couldn't read file")
+	} else {
+		passed("read file")
+	}
 
 	//verify file contents match expected
 	task("verify /usr/foo contents")
-	if string(fs.Root.Content["usr"].Dir.Content["foo"].File.Content) != "bar" {
+	if string(vir_contents) != "bar" {
 		failed("file contents did not match")
 	} else {
 		passed("file contents matched")
@@ -200,9 +255,18 @@ func unix_test() {
 		passed("created file in root dir")
 	}
 
+	//attempt to read the file
+	task("read file /usr/foo")
+	vir_contents2, e := fs.ReadFile("/usr/foo")
+	if e != nil {
+		failed("couldn't read file")
+	} else {
+		passed("read file")
+	}
+
 	//verify the file contents match expected
 	task("verify /bar contents")
-	if string(fs.Root.Content["bar"].File.Content) != "foo" {
+	if string(vir_contents2) != "foo" {
 		failed("file contents did not match")
 	} else {
 		passed("file contents matched")
